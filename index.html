@@ -4,74 +4,102 @@
     <title>musicly</title>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6/dist/abcjs-basic-min.js"></script>
+    <style>
+        main * {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+        .msgnote {
+            font-size: 2em;
+        }
+        h1, h2 {
+            margin: 10px;
+            font-size: 3em;
+        }
+    </style>
 </head>
-<body onload="brython()">
-    <main class="container">
-        <h1>musicly</h1>
-        <input type="range" id="pitch">
-        <p>A simple music player built with Python and Brython.</p>
-        <audio id="audio-player" controls>
-            <source src="your-audio-file.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-        <br><br>
-        <button id="play-btn">Play</button>
-        <button id="pause-btn">Pause</button>
-        <button id="stop-btn">Stop</button>
+<body>
+    <main style="margin: 0px 10px;">
+        <h1><i class="bi bi-music-note-beamed"></i><i class="bi bi-music-note-beamed"></i><i class="bi bi-music-note-beamed"></i></h1>
+        <div id="notes"></div>
+        <input type="range" id="pitch" min="65" max="988" value="440" step="0.25">
+        <button id="add">+</button><button id="send"><i class="bi bi-send"></i></button>
+        <h2><i class="bi bi-chat-dots"></i></h2><button id="load"><i class="bi bi-cloud-download"></i></button><button id="clear"><i class="bi bi-trash"></i></button>
+        <div id="messages"></div>
     </main>
     <script>
         const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        var oscillator, note;
 
-        function playNote(frequency, duration) {
-        const oscillator = audioCtx.createOscillator();
-
-        oscillator.type = 'square';
-        oscillator.frequency.value = frequency;
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
-
-        setTimeout(
-            function() {
-            oscillator.stop();
-            playMelody();
-            }, duration);
-        }
-
-        function playMelody() {
-        if (notes.length > 0) {
-            note = notes.pop();
-            playNote(note[0], 1000 * 256 / (note[1] * tempo));
-        }
-        }
-
-        notes = [
-        [659, 4],
-        [659, 4],
-        [659, 4],
-        [523, 8],
-        [0, 16],
-        [783, 16],
-        [659, 4],
-        [523, 8],
-        [0, 16],
-        [783, 16],
-        [659, 4],
-        [0, 4],
-        [987, 4],
-        [987, 4],
-        [987, 4],
-        [1046, 8],
-        [0, 16],
-        [783, 16],
-        [622, 4],
-        [523, 8],
-        [0, 16],
-        [783, 16],
-        [659, 4]
+        const names = [
+            'C0', 'C#0', 'Db0', 'D0', 'D#0', 'Eb0', 'E0', 'F0', 'F#0', 'Gb0', 'G0', 'G#0', 'Ab0', 'A0', 'A#0', 'Bb0', 'B0',
+            'C1', 'C#1', 'Db1', 'D1', 'D#1', 'Eb1', 'E1', 'F1', 'F#1', 'Gb1', 'G1', 'G#1', 'Ab1', 'A1', 'A#1', 'Bb1', 'B1',
+            'C,', '^C,', '_D,', 'D,', '^D,', '_E,', 'E,', 'F,', '^F,', '_G,', 'G,', '^G,', '_A,', 'A,', '^A,', '_B,', 'B,',
+            'C', '^C', '_D', 'D', '^D', '_E', 'E', 'F', '^F', '_G', 'G', '^G', '_A', 'A', '^A', '_B', 'B',
+            'c', '^c', '_d', 'd', '^d', '_e', 'e', 'f', '^f', '_g', 'g', '^g', '_a', 'a', '^a', '_b', 'b',
+            "c'", "^c'", "_d'", "d'", "^d'", "_e'", "e'", "f'", "^f'", "_g'", "g'", "^g'", "_a'", "a'", "^a'", "_b'", "b'",
+            'C6', 'C#6', 'Db6', 'D6', 'D#6', 'Eb6', 'E6', 'F6', 'F#6', 'Gb6', 'G6', 'G#6', 'Ab6', 'A6', 'A#6', 'Bb6', 'B6',
+            'C7', 'C#7', 'Db7', 'D7', 'D#7', 'Eb7', 'E7', 'F7', 'F#7', 'Gb7', 'G7', 'G#7', 'Ab7', 'A7', 'A#7', 'Bb7', 'B7',
+            'C8', 'C#8', 'Db8', 'D8', 'D#8', 'Eb8', 'E8', 'F8', 'F#8', 'Gb8', 'G8', 'G#8', 'Ab8', 'A8', 'A#8', 'Bb8', 'B8'
         ];
+        const freqs = [16.25, 17.25, 17.25, 18.25, 19.5, 19.5, 20.5, 21.75, 23.0, 23.0, 24.5, 26.0, 26.0, 27.5, 29.25, 29.25, 30.75, 32.75, 34.75, 34.75, 36.75, 39.0, 39.0, 41.25, 43.75, 46.25, 46.25, 49.0, 52.0, 52.0, 55.0, 58.25, 58.25, 61.75, 65.5, 69.25, 69.25, 73.5, 77.75, 77.75, 82.5, 87.25, 92.5, 92.5, 98.0, 103.75, 103.75, 110.0, 116.5, 116.5, 123.5, 130.75, 138.5, 138.5, 146.75, 155.5, 155.5, 164.75, 174.5, 185.0, 185.0, 196.0, 207.75, 207.75, 220.0, 233.0, 233.0, 247.0, 261.75, 277.25, 277.25, 293.75, 311.25, 311.25, 329.75, 349.25, 370.0, 370.0, 392.0, 415.25, 415.25, 440.0, 466.25, 466.25, 494.0, 523.25, 554.25, 554.25, 587.25, 622.25, 622.25, 659.25, 698.5, 740.0, 740.0, 784.0, 830.5, 830.5, 880.0, 932.25, 932.25, 987.75, 1046.5, 1108.75, 1108.75, 1174.75, 1244.5, 1244.5, 1318.5, 1397.0, 1480.0, 1480.0, 1568.0, 1661.25, 1661.25, 1760.0, 1864.75, 1864.75, 1975.5, 2093.0, 2217.5, 2217.5, 2349.25, 2489.0, 2489.0, 2637.0, 2793.75, 2960.0, 2960.0, 3136.0, 3322.5, 3322.5, 3520.0, 3729.25, 3729.25, 3951.0, 4186.0, 4435.0, 4435.0, 4698.75, 4978.0, 4978.0, 5274.0, 5587.75, 5920.0, 5920.0, 6272.0, 6645.0, 6645.0, 7040.0, 7458.5, 7458.5, 7902.25];
+        var notes = [];
 
-        notes.reverse();
-        tempo = 100;
+        function showMessages(msgs) {
+            var count = 0;
+            document.getElementById("messages").innerHTML = "";
+            msgs.forEach(msg => {
+                const note = document.createElement("div");
+                note.id = `note${count}`;
+                document.getElementById("messages").appendChild(note);
+                window.ABCJS.renderAbc(`note${count}`, "L: 4\nK:C clef=treble octave=-1\n" + msg.join(""));
+                count++;
+            });
+        }
 
-        playMelody();
+        document.getElementById("load").addEventListener("click", fetchMessages);
+        function fetchMessages() {
+            fetch("/messages").then(res => res.json()).then((msgs) => showMessages(msgs["messages"]));
+        }
+
+        document.getElementById("pitch").addEventListener("input", (ev) => {
+            oscillator?.stop();
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = "square";
+            oscillator.frequency.value = ev.target.value;
+            oscillator.connect(audioCtx.destination);
+            oscillator.start();
+            console.log();
+        });
+        document.getElementById("add").addEventListener("click", () => {
+            document.getElementById("notes").innerHTML += `<i class="bi bi-music-note msgnote"></i>`
+            notes.push(names.map((n, i) => [n, Math.abs(freqs[i] - document.getElementById("pitch").value)]).sort((a, b) => a[1] - b[1])[0][0]);
+        });
+
+        document.getElementById("clear").addEventListener("click", () => {
+            fetch ("/clear", {method: "POST"}).then(fetchMessages);
+        });
+
+        document.getElementById("send").addEventListener("click", () => {
+            if (!notes.length) {
+                return;
+            }
+            fetch("/send", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({notes})
+            }).then(fetchMessages);
+            notes = [];
+            document.getElementById("notes").innerHTML = "";
+        });
+        document.getElementById("pitch").addEventListener("mouseup", () => oscillator?.stop());
+        document.getElementById("pitch").addEventListener("keyup", () => oscillator?.stop());
+        window.onblur = () => oscillator?.stop();
+
+
     </script>
