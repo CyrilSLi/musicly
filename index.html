@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>musicly</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.min.js"></script>
+</head>
+<body onload="brython()">
+    <main class="container">
+        <h1>musicly</h1>
+        <input type="range" id="pitch">
+        <p>A simple music player built with Python and Brython.</p>
+        <audio id="audio-player" controls>
+            <source src="your-audio-file.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <br><br>
+        <button id="play-btn">Play</button>
+        <button id="pause-btn">Pause</button>
+        <button id="stop-btn">Stop</button>
+    </main>
+    <script type="text/python">
+        from browser import document, window
+
+        audio_player = document["audio-player"]
+
+        def play_audio(event):
+            audio_player.play()
+
+        def pause_audio(event):
+            audio_player.pause()
+
+        def stop_audio(event):
+            audio_player.pause()
+            audio_player.currentTime = 0
+
+        document["play-btn"].bind("click", play_audio)
+        document["pause-btn"].bind("click", pause_audio)
+        document["stop-btn"].bind("click", stop_audio)
+    </script>
