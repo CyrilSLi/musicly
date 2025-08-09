@@ -4,8 +4,6 @@
     <title>musicly</title>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.min.js"></script>
 </head>
 <body onload="brython()">
     <main class="container">
@@ -21,22 +19,59 @@
         <button id="pause-btn">Pause</button>
         <button id="stop-btn">Stop</button>
     </main>
-    <script type="text/python">
-        from browser import document, window
+    <script>
+        const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
 
-        audio_player = document["audio-player"]
+        function playNote(frequency, duration) {
+        const oscillator = audioCtx.createOscillator();
 
-        def play_audio(event):
-            audio_player.play()
+        oscillator.type = 'square';
+        oscillator.frequency.value = frequency;
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
 
-        def pause_audio(event):
-            audio_player.pause()
+        setTimeout(
+            function() {
+            oscillator.stop();
+            playMelody();
+            }, duration);
+        }
 
-        def stop_audio(event):
-            audio_player.pause()
-            audio_player.currentTime = 0
+        function playMelody() {
+        if (notes.length > 0) {
+            note = notes.pop();
+            playNote(note[0], 1000 * 256 / (note[1] * tempo));
+        }
+        }
 
-        document["play-btn"].bind("click", play_audio)
-        document["pause-btn"].bind("click", pause_audio)
-        document["stop-btn"].bind("click", stop_audio)
+        notes = [
+        [659, 4],
+        [659, 4],
+        [659, 4],
+        [523, 8],
+        [0, 16],
+        [783, 16],
+        [659, 4],
+        [523, 8],
+        [0, 16],
+        [783, 16],
+        [659, 4],
+        [0, 4],
+        [987, 4],
+        [987, 4],
+        [987, 4],
+        [1046, 8],
+        [0, 16],
+        [783, 16],
+        [622, 4],
+        [523, 8],
+        [0, 16],
+        [783, 16],
+        [659, 4]
+        ];
+
+        notes.reverse();
+        tempo = 100;
+
+        playMelody();
     </script>
